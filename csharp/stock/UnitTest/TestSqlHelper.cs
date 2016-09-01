@@ -54,11 +54,18 @@ namespace stock
         [Test]
         public static void TestUpdate()
         {
-            var sql = @"update stock
+            var sql = @"
+update stock
 set publicdate=now();";
             SqlHelper.ExecuteNonQuery(sql);
         }
 
+        [Test]
+        public static void TestGetHQFrom163()
+        {
+            var list = WYStockBiz.GetTradeList(2);
+            Console.WriteLine(list.Count);
+        }
 
     }
 }
