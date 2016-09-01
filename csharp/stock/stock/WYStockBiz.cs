@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
-using Newegg.API.Client;
+using Restful.Web.Client.Client;
 
 namespace stock
 {
@@ -14,13 +14,10 @@ namespace stock
 
         public static List<StockEntity> GetTradeList(int count = 3500)
         {
-            var client = new RestAPIClient(string.Format(hq163url,count)) {Proxy = WebProxy.GetDefaultProxy()};
-            if (client.Proxy != null)
-            {
-                client.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
-            }
+            var client = new JsonWebClient(string.Format(hq163url, count));
+            
            
-            var result = client.Get<hq>(string.Empty, null);
+            var result = client.Get<hq>(string.Empty);
             if (result != null
                 && result.list != null)
             {
