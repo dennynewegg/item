@@ -1,9 +1,2 @@
 /**/bin/*
 /**/obj/*
-/**/Output/*
-/**/UnitTest/DaoConfig/*
-/**/*.sln
-/**/*.suo
-/**/*.csproj.user
-/**/TestResults
-/**/.suo
