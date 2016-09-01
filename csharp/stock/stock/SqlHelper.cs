@@ -13,24 +13,15 @@ namespace stock
 {
     public static class SqlHelper
     {
-        private static string LocalDb = "LocalDb";
 
-        private static DbConnection GetConnection(string connKey)
-        {
-            return ConnectionWrapper.GetConnection(connKey);
-        }
 
-        private static DbConnection GetConnection()
-        {
-            return GetConnection(LocalDb);
-        }
-
+        #region public 
         public static void ExecuteNonQuery(string sql, params object[] param)
         {
             Execute(GetSqlCmd(sql, param), cmd =>cmd.ExecuteNonQuery());
         }
 
-        private static List<T> GetList<T>(string sql, params object[] param)
+        public static List<T> GetList<T>(string sql, params object[] param)
         {
             return ToList<T>(GetDataTable(sql,param)) ;
         }
@@ -57,9 +48,98 @@ namespace stock
             return ds;
         }
 
-        private static T GetEntity<T>(string sql,params object[] param)
+        public static T GetEntity<T>(string sql,params object[] param)
         {
             return GetList<T>(sql, param).FirstOrDefault();
+        }
+
+        public static DbParameter CreateParameter(string paramName, object value)
+        {
+            if (value is DbParameter)
+            {
+                return value as DbParameter;
+            }
+            DbParameter parameter = ConnectionWrapper.factory.CreateParameter();
+            parameter.Direction = ParameterDirection.Input;
+            parameter.ParameterName = paramName;
+            parameter.IsNullable = true;
+            parameter.Value = value;
+            return parameter;
+        }
+
+        public static List<T> ToList<T>(DataTable tb)
+        {
+            if (tb == null
+                || tb.Rows.Count == 0)
+            {
+                return new List<T>(0);
+            }
+            var list = new List<T>(tb.Rows.Count);
+
+            if (typeof (T).IsPrimitive
+                ||typeof(T) == typeof(string)
+                ||typeof(Nullable<>).IsAssignableFrom(typeof(T) ))
+            {
+                list.AddRange(from DataRow dr in tb.Rows 
+                              select dr[0] into value 
+                              where value != DBNull.Value
+                              && value != null
+                              select (T)ToValue(value,typeof(T)));
+            }
+            else
+            {
+                var map = new List<KeyValuePair<DataColumn, PropertyInfo>>();
+                var type = typeof (T);
+
+                foreach (var propertyInfo in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                {
+                    if (!propertyInfo.CanWrite) continue;
+                    foreach (DataColumn column in tb.Columns)
+                    {
+                        if (string.Compare(column.ColumnName, propertyInfo.Name, StringComparison.OrdinalIgnoreCase) ==0)
+                        {
+                            map.Add(new KeyValuePair<DataColumn, PropertyInfo>(column, propertyInfo));
+                            break;
+                        }
+                    }
+                }
+                if (map.Count <= 0) return new List<T>(0);
+
+                foreach (DataRow dr in tb.Rows)
+                {
+                    var item = Activator.CreateInstance<T>();
+                    foreach (var kv in map)
+                    {
+                        var value = dr[kv.Key];
+                        if (value != DBNull.Value
+                            && value != null)
+                        {
+                            kv.Value.SetValue(item, ToValue(value,kv.Value.PropertyType), null);
+                        }
+                    }
+                    list.Add(item);
+                }
+            }
+            return list;
+        }
+
+        #endregion
+
+        #region private
+
+
+
+
+        private static string LocalDb = "LocalDb";
+
+        private static DbConnection GetConnection(string connKey)
+        {
+            return ConnectionWrapper.GetConnection(connKey);
+        }
+
+        private static DbConnection GetConnection()
+        {
+            return GetConnection(LocalDb);
         }
 
 
@@ -98,17 +178,15 @@ namespace stock
             }
         }
 
-
         private static DbCommand GetSqlCmd(string sql, params object[] param)
         {
             var cmd = ConnectionWrapper.factory.CreateCommand(); //conn.CreateCommand();
             sql = sql.ToUpper();
-            cmd.Parameters.AddRange(CreateParametersForList(ref sql,string.Empty,param as IEnumerable));
+            cmd.Parameters.AddRange(CreateParametersForList(ref sql, string.Empty, param as IEnumerable));
             cmd.CommandType = CommandType.Text;
             cmd.CommandText = sql;
             return cmd;
         }
-
 
         private static DbParameter[] CreateParametersForList(ref string sql, string suffix, IEnumerable source)
         {
@@ -116,8 +194,12 @@ namespace stock
             {
                 return new DbParameter[0];
             }
-           
+
             var enumerable = source as object[] ?? source.Cast<object>().ToArray();
+            if (enumerable.Count() == 0)
+            {
+                return new DbParameter[0];
+            }
 
             if (enumerable.First() is DbParameter)
             {
@@ -129,12 +211,12 @@ namespace stock
                 if (sqlVariables.Count == 1
                     && enumerable.Length > 1)
                 {
-                    return CreateParametersForList(ref sql, suffix, enumerable.Select(item => new object[] {item}));
+                    return CreateParametersForList(ref sql, suffix, enumerable.Select(item => new object[] { item }));
                 }
-                return CreateParametersForValueList(ref sql,suffix, enumerable.ToArray());
+                return CreateParametersForValueList(ref sql, suffix, enumerable.ToArray());
             }
 
-            var paramList = new List<DbParameter>(enumerable.Count()*10);
+            var paramList = new List<DbParameter>(enumerable.Count() * 10);
             var sqlBuilder = new StringBuilder(sql.Length * (enumerable.Count() + 10));
             for (var i = 0; i < enumerable.Count(); i++)
             {
@@ -145,9 +227,9 @@ namespace stock
                     paramList.AddRange(CreateParametersForList(ref paramSql, string.Format("{0}_{1}", suffix, i),
                         item as IEnumerable));
                 }
-                else if(item.GetType().IsClass)
+                else if (item.GetType().IsClass)
                 {
-                    paramList.AddRange(CreateParametersForEntity(ref paramSql,item,string.Format("_{0}",i)));
+                    paramList.AddRange(CreateParametersForEntity(ref paramSql, item, string.Format("_{0}", i)));
                 }
                 sqlBuilder.AppendLine(paramSql);
             }
@@ -178,8 +260,8 @@ namespace stock
             }
             return paramList.ToArray();
         }
-        
-        private static DbParameter[] CreateParametersForValueList(ref string sql,string suffix , params object[] param)
+
+        private static DbParameter[] CreateParametersForValueList(ref string sql, string suffix, params object[] param)
         {
             if (param == null)
             {
@@ -210,19 +292,6 @@ namespace stock
             return paramList.ToArray();
         }
 
-        public static DbParameter CreateParameter(string paramName, object value)
-        {
-            if (value is DbParameter)
-            {
-                return value as DbParameter;
-            }
-            DbParameter parameter = ConnectionWrapper.factory.CreateParameter();
-            parameter.Direction = ParameterDirection.Input;
-            parameter.ParameterName = paramName;
-            parameter.IsNullable = true;
-            parameter.Value = value;
-            return parameter;
-        }
 
         private static object GetObjectValue(object obj, string propertyName)
         {
@@ -232,7 +301,7 @@ namespace stock
             }
             var type = obj.GetType();
             return (from property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    where String.Compare(property.Name, propertyName, StringComparison.OrdinalIgnoreCase) == 0 
+                    where String.Compare(property.Name, propertyName, StringComparison.OrdinalIgnoreCase) == 0
                     && property.CanRead
                     select property.GetValue(obj, null)).FirstOrDefault();
         }
@@ -246,43 +315,22 @@ namespace stock
             return SQLAnalyser.GetInputParamList(sql);
         }
 
-        public static List<T> ToList<T>(DataTable tb)
+        private static object ToValue(object obj, Type descType)
         {
-            if (tb == null
-                || tb.Rows.Count == 0)
+            if (obj == null)
             {
-                return new List<T>(0);
+                return null;
             }
-            var map = new List<KeyValuePair<DataColumn, PropertyInfo>>();
-            var type = typeof (T);
-
-            foreach (var propertyInfo in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            if (descType == typeof (string))
             {
-                if (propertyInfo.CanWrite)
-                {
-                    foreach (DataColumn column in tb.Columns)
-                    {
-                        if (string.Compare(column.ColumnName, propertyInfo.Name, StringComparison.OrdinalIgnoreCase) ==
-                            0)
-                        {
-                            map.Add(new KeyValuePair<DataColumn, PropertyInfo>(column, propertyInfo));
-                        }
-                        break;
-                    }
-                }
+                return obj.ToString();
             }
-            if (map.Count <= 0) return new List<T>(0);
-            var list = new List<T>(tb.Rows.Count);
-            foreach (DataRow dr in tb.Rows)
-            {
-                var item = Activator.CreateInstance<T>();
-                foreach (var kv in map)
-                {
-                    kv.Value.SetValue(item,dr[kv.Key],null);
-                }
-                list.Add(item);
-            }
-            return list;
+            return obj;
         }
+
+        #endregion
+
+
+
     }
 }
