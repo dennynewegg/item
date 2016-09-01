@@ -74,6 +74,7 @@ namespace stock
                     isOpenConn = true;
                     conn.Open();
                 }
+                cmd.Connection = conn;
                 action(cmd);
             }
             catch (Exception ex)
