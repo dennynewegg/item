@@ -67,5 +67,16 @@ set publicdate=now();";
             Console.WriteLine(list.Count);
         }
 
+        [Test]
+        public static void Testsina()
+        {
+            var list = SinaBiz.GetTradeList(2);
+            if (list.Count()>0)
+            {
+                DailyDAL.Insert(list);
+            }
+           
+            Console.WriteLine(list.Count);
+        }
     }
 }
