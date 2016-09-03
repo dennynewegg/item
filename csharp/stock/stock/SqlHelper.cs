@@ -21,6 +21,11 @@ namespace stock
             Execute(GetSqlCmd(sql, param), cmd =>cmd.ExecuteNonQuery());
         }
 
+        public static void ExecuteNonQuery(string sql, IList param)
+        {
+            Execute(GetSqlCmd(sql, param), cmd => cmd.ExecuteNonQuery());
+        }
+
         public static List<T> GetList<T>(string sql, params object[] param)
         {
             return ToList<T>(GetDataTable(sql,param)) ;

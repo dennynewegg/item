@@ -67,5 +67,11 @@ set publicdate=now();";
             Console.WriteLine(list.Count);
         }
 
+        [Test]
+        public static void TestPlanFinance()
+        {
+            var list = WYStockBiz.GetPlanFinance(DateTime.Now.AddDays(-10));
+            Console.WriteLine(list.Count);
+        }
     }
 }

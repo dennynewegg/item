@@ -19,6 +19,9 @@ namespace stock
         public decimal? Percent { get; set; }
         public decimal? Turnover { get; set; }
 
+
+
+
         public decimal? AvgCost
         {
             get
