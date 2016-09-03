@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
+using StockBiz;
+using StockBiz.DAL;
 
 
 namespace stock
@@ -63,20 +65,48 @@ set publicdate=now();";
         [Test]
         public static void TestGetHQFrom163()
         {
-            var list = WYStockBiz.GetTradeList(2);
+            var list = WYStockBiz.GetTradeList();
+            if (list.Count > 0)
+            {
+               DailyDAL.Insert(list);
+            }
             Console.WriteLine(list.Count);
         }
+
+        [Test]
+        public static void TestInsertStock()
+        {
+            var list = WYStockBiz.GetTradeList();
+            StockDAL.InsertStock(list);
+        }
+
 
         [Test]
         public static void Testsina()
         {
             var list = SinaBiz.GetTradeList(2);
-            if (list.Count()>0)
+            if (list.Count>0)
             {
                 DailyDAL.Insert(list);
             }
            
             Console.WriteLine(list.Count);
         }
+
+        [Test]
+        public static void TestHistoryDate()
+        {
+            var stocklist  = WYStockBiz.GetTradeList();
+            foreach (var stockEntity in stocklist)
+            {
+                var list = WYStockBiz.HistoryTradeList(stockEntity.StockCode, DateTime.Now.AddYears(-1), DateTime.Now);
+                if (list.Count > 0)
+                {
+                    DailyDAL.Insert(list);
+                }
+                Console.WriteLine(list.Count);
+            }
+        }
+
     }
 }

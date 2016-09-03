@@ -54,9 +54,9 @@
     <Compile Include="TestSqlHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\stock\stock.csproj">
+    <ProjectReference Include="..\stock\StockBiz.csproj">
       <Project>{1e6c24f4-93bd-48dc-b2f3-ad15b3c06d98}</Project>
-      <Name>stock</Name>
+      <Name>StockBiz</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

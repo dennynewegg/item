@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace stock
+namespace StockBiz
 {
     [Serializable]
     public class StockEntity
@@ -18,15 +18,16 @@ namespace stock
         public decimal? Volume { get; set; }
         public decimal? Percent { get; set; }
         public decimal? Turnover { get; set; }
+        public decimal? Amount { get; set; }
 
         public decimal? AvgCost
         {
             get
             {
-                if (Turnover.GetValueOrDefault() > 0
+                if (Amount.GetValueOrDefault() > 0
                     && Volume.GetValueOrDefault() > 0)
                 {
-                    return Math.Round(Turnover.Value/Volume.Value, 2);
+                    return Math.Round(Amount.Value / Volume.Value, 2);
                 }
                 if (Close.HasValue)
                 {

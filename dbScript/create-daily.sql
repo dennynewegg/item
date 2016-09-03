@@ -1,3 +1,6 @@
+drop database svc;
+
+
 create database svc;
 use svc;
 
@@ -8,12 +11,14 @@ CREATE TABLE svc.daily
      rowid int PRIMARY KEY auto_increment
     ,stockcode char(6) NOT NULL
     ,InDate  datetime
+    ,close dec(8,2) 
 	,open dec(8,2)
 	,high dec(8,2) 
 	,low dec(8,2) 
-	,close dec(8,2) 
-    ,Volume dec(14,0) 
-    ,Turnover dec(14,0)
+    ,Turnover dec(5,2)
+    ,Percent dec(5,2)
+	,Volume dec(14,0) 
+    ,Amount dec(14,0)
 	,datesort smallint);
     
     create index IX_daily_stockCode on svc.daily (stockcode);
