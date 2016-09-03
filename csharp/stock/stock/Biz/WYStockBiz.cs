@@ -65,6 +65,8 @@ namespace StockBiz
 
         #endregion
 
+        #region  historydata
+
         private const string historydataUrl = "http://quotes.money.163.com/service/chddata.html?code={0}&start={1}&end={2}&fields=TCLOSE;HIGH;LOW;TOPEN;LCLOSE;PCHG;TURNOVER;VOTURNOVER;VATURNOVER";
         public static List<StockEntity> HistoryTradeList(string stockCode, DateTime from, DateTime to)
         {
@@ -88,12 +90,91 @@ namespace StockBiz
 
                     return list
                         .Where(item => item.Volume.GetValueOrDefault() > 0)
-                       
+
                         .ToList()
                         ;
                 }
             }
             return new List<StockEntity>();
         }
+
+
+
+        #endregion
+
+
+
+        #region 业绩预告
+
+        private const string yjygUrl = "http://quotes.money.163.com/hs/marketdata/service/yjyg.php?page={0}&sort=REPORTDATE&order=desc&count={1}&req=6916";
+
+        public static List<StockFinanceEntity> GetPlanFinance(DateTime startDate)
+        {
+
+            var planList = new List<StockFinanceEntity>(100);
+            const int pageCount = 200;
+            int pageIndex = 1;
+            while (true)
+            {
+                var url = string.Format(yjygUrl, pageIndex, pageCount);
+                var restClient = new RestClient();
+                var ygResult = restClient.GetJson<yjyg>(url);
+
+                if (ygResult == null
+                    || ygResult.list == null)
+                {
+                    break;
+                }
+
+                var ygList = ygResult.list.Where(item => item.REPORTDATE > startDate)
+                    .Select(item => new StockFinanceEntity()
+                    {
+                        StockName = item.SNAME,
+                        StockCode = item.SYMBOL,
+                        ReportDate = item.YY,
+                        InDate = item.REPORTDATE,
+                        PlanType = item.EFCT12,
+                        PlanMemo = item.EFCT11
+                    }).ToList();
+
+                planList.AddRange(ygList);
+
+                if (ygList.Count < pageCount)
+                { break; }
+                pageIndex++;
+            }
+            return planList;
+        }
+
+
+        class yjyg
+        {
+            public List<yjygitem> list { get; set; }
+        }
+        class yjygitem
+        {
+            /// <summary>
+            /// 预告类型:预增,预亏.
+            /// </summary>
+            public string EFCT12 { get; set; }
+            public DateTime REPORTDATE { get; set; }
+
+            /// <summary>
+            /// 报告日期,是固定的3.31/6.30/9.30/12.31
+            /// </summary>
+            public DateTime YY { get; set; }
+            /// <summary>
+            /// 预告详细说明
+            /// </summary>
+            public string EFCT11 { get; set; }
+            public string SYMBOL { get; set; }
+            public string SNAME { get; set; }
+
+            /// <summary>
+            /// 上年同期每股收益
+            /// </summary>
+            public decimal? MFRATIO14 { get; set; }
+        }
+        #endregion
     }
 }

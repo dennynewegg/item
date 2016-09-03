@@ -20,6 +20,9 @@ namespace StockBiz
         public decimal? Turnover { get; set; }
         public decimal? Amount { get; set; }
 
+
+
+
         public decimal? AvgCost
         {
             get

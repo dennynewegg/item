@@ -74,12 +74,11 @@ set publicdate=now();";
         }
 
         [Test]
-        public static void TestInsertStock()
+        public static void TestPlanFinance()
         {
-            var list = WYStockBiz.GetTradeList();
-            StockDAL.InsertStock(list);
+            var list = WYStockBiz.GetPlanFinance(DateTime.Now.AddDays(-10));
+            Console.WriteLine(list.Count);
         }
-
 
         [Test]
         public static void Testsina()

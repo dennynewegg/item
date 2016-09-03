@@ -9,7 +9,7 @@ namespace StockBiz
 {
     class ListHelper
     {
-        public static void ForRange<T>(List<T> list,Action<List<T>> action ,int count=50)
+        public static void ForRange<T>(List<T> list,Action<List<T>> action ,int count=200)
         {
             var index = 0;
             while (true)

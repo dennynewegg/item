@@ -10,7 +10,7 @@ namespace StockBiz
     public static class SerializeHelper
     {
         public static T JsvDeserialize<T>(string str)
-            where T:class 
+            //where T:class 
         {
             var ser = new JsvStringSerializer();
             return ser.DeserializeFromString<T>(str);
