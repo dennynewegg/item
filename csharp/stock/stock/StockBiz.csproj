@@ -59,9 +59,14 @@
   <ItemGroup>
     <Compile Include="DAL\ConnectionWrapper.cs" />
     <Compile Include="DAL\DailyDAL.cs" />
+    <Compile Include="DAL\FinanceDAL.cs" />
     <Compile Include="DAL\StockDAL.cs" />
+    <Compile Include="Helper\ILogWriter.cs" />
     <Compile Include="Helper\ListHelper.cs" />
+    <Compile Include="Helper\LogFactory.cs" />
     <Compile Include="Helper\StockHelper.cs" />
+    <Compile Include="Biz\JobBiz.cs" />
+    <Compile Include="Helper\StringHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -80,9 +85,9 @@
     <Compile Include="DAL\SQLAnalyser.cs" />
     <Compile Include="DAL\SqlHelper.cs" />
     <Compile Include="Helper\RestClient.cs" />
-    <Compile Include="StockEntity.cs" />
+    <Compile Include="Entity\StockEntity.cs" />
     <Compile Include="Biz\WYStockBiz.cs" />
-    <Compile Include="StockFinanceEntity.cs" />
+    <Compile Include="Entity\StockFinanceEntity.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -95,6 +100,7 @@
     </None>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

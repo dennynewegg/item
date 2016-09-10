@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
-
+using ServiceStack;
 using ServiceStack.Text;
 using ServiceStack.Text.Jsv;
+using StockBiz.Helper;
 
 namespace StockBiz
 {
@@ -16,14 +17,20 @@ namespace StockBiz
 
         public static List<StockEntity> GetTradeList(int count = 3500)
         {
-            var client = new WebClient();
+            var client = new RestClient();
             var str = client.DownloadString(hq163url);
 
             var result = SerializeHelper.JsvDeserialize<List<hqitem>>(str);
             if (result != null
                 && result.Count()>0)
             {
-                return result.Select(item =>
+                string firstCode = result.First().code;
+                var stockDate = GetRealTime(new List<string>() { firstCode }).InDate;
+            
+
+            return result
+                    .Where(item=>item.volume.GetValueOrDefault()>0)
+                    .Select(item =>
                     new StockEntity
                     {
                         StockCode = item.code,
@@ -33,9 +40,10 @@ namespace StockBiz
                         Percent = item.changepercent,
                         Close = item.trade,
                         StockName = item.name,
-                        InDate = DateTime.Parse(DateTime.Now.ToShortDateString()+" "+item.ticktime),
+                        InDate = stockDate,
                         Volume = item.volume,
-                        Turnover = item.amount
+                        Amount = item.amount,
+                        Turnover =Math.Round( item.turnoverratio.Value)
                     }
                 ).ToList();
             }
@@ -54,6 +62,33 @@ namespace StockBiz
             public string ticktime { get; set; }
             public decimal? volume { get; set; }
             public decimal? amount { get; set; }
+            public decimal? turnoverratio { get; set; }
+        }
+
+
+        public static StockEntity GetRealTime(List<string> stockCodeList)
+        {
+            string codes =  stockCodeList.Select(str => StockHelper.GetLongCode(str))
+                .Join(",");
+            string url = "http://hq.sinajs.cn/list=" + codes;
+            var client = new RestClient();
+            var dataStr = client.DownloadString(url);
+            var stockStrAry = dataStr.Split(';');
+            //var list 
+
+            //foreach (var stockStr in stockStrAry)
+            //{
+            var stockStr = stockStrAry.First();
+            var eqIndex = stockStr.IndexOf("=");
+            var stockData = stockStr.Substring(eqIndex + 2);
+            stockData = stockData.Substring(0, stockData.Length - 1);
+            var stockDatas = stockData.Split(',');
+
+            return new StockEntity
+            {
+                InDate = DateTime.Parse( stockDatas[30]+" "+stockDatas[31])
+            };
+            //}
         }
 
     }

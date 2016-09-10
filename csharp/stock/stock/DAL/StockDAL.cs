@@ -13,5 +13,12 @@ namespace StockBiz.DAL
             var sql = "INSERT INTO svc.stock(stockcode,stockname) value(@stockcode,@stockname);";
             SqlHelper.ExecuteNonQuery(sql,list);
         }
+
+        public static List<StockEntity> GetStockList()
+        {
+            var sql = "select * from svc.stock;";
+            return SqlHelper.GetList<StockEntity>(sql);
+        }
+
     }
 }

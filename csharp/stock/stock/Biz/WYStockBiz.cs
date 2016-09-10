@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using ServiceStack;
 using StockBiz.Helper;
 
 
@@ -18,7 +19,7 @@ namespace StockBiz
 
         public static List<StockEntity> GetTradeList(int count = 3500)
         {
-            var client = new WebClient();
+            var client = new RestClient();
             var json = client.DownloadString(string.Format(hq163url, count));
             var result = SerializeHelper.JsonDeserialize<hq>(json);
             if (result?.list != null && result.list.Any())
@@ -35,7 +36,7 @@ namespace StockBiz
                                 Percent = item.PERCENT.GetValueOrDefault()*100,
                                 Close = item.PRICE,
                                 StockName = item.SNAME,
-                                InDate = DateTime.Parse(item.TIME),
+                                InDate = DateTime.Parse(item.TIME).Date,
                                 Volume = item.VOLUME,
                                 Turnover = item.TURNOVER
                             }
@@ -70,7 +71,7 @@ namespace StockBiz
         private const string historydataUrl = "http://quotes.money.163.com/service/chddata.html?code={0}&start={1}&end={2}&fields=TCLOSE;HIGH;LOW;TOPEN;LCLOSE;PCHG;TURNOVER;VOTURNOVER;VATURNOVER";
         public static List<StockEntity> HistoryTradeList(string stockCode, DateTime from, DateTime to)
         {
-            var client = new WebClient();
+            var client = new RestClient();
             var csv = client.DownloadString(String.Format(historydataUrl, StockHelper.WYCode(stockCode)
                 , from.ToString("yyyyMMdd")
                 , to.ToString("yyyyMMdd")));
@@ -83,16 +84,19 @@ namespace StockBiz
                 var list = SerializeHelper.CsvDeserialize<List<StockEntity>>(csv);
                 if (list.Count > 0)
                 {
+                 
                     foreach (var item in list)
                     {
                         item.StockCode = item.StockCode.Replace("'", string.Empty).Trim();
                     }
-
-                    return list
-                        .Where(item => item.Volume.GetValueOrDefault() > 0)
-
-                        .ToList()
-                        ;
+                    list = list.Where(item => item.Volume.GetValueOrDefault() > 0)
+                        .OrderBy(item => item.InDate)
+                        .ToList();
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        list[i].DateSort = i;
+                    }
+                    return list;
                 }
             }
             return new List<StockEntity>();
@@ -101,9 +105,7 @@ namespace StockBiz
 
 
         #endregion
-
-
-
+       
         #region 业绩预告
 
         private const string yjygUrl = "http://quotes.money.163.com/hs/marketdata/service/yjyg.php?page={0}&sort=REPORTDATE&order=desc&count={1}&req=6916";
@@ -113,7 +115,7 @@ namespace StockBiz
 
             var planList = new List<StockFinanceEntity>(100);
             const int pageCount = 200;
-            int pageIndex = 1;
+            int pageIndex = 0;
             while (true)
             {
                 var url = string.Format(yjygUrl, pageIndex, pageCount);
@@ -174,7 +176,131 @@ namespace StockBiz
             /// 上年同期每股收益
             /// </summary>
             public decimal? MFRATIO14 { get; set; }
+
+            public DateTime? PUBLISHDATE { get; set; }
+            /// <summary>
+            /// 当前报表每股收益
+            /// </summary>
+            public string MFRATIO28 { get; set; }
+
+            /// <summary>
+            /// 每股净资产       
+            /// </summary>
+            public string MFRATIO18 { get; set; }
+
+            /// <summary>
+            /// 每股经营现金流
+            /// </summary>
+            public string MFRATIO20 { get; set; }
+
+            /// <summary>
+            /// 主营业务收入
+            /// </summary>
+            public string MFRATIO10 { get; set; }
+            /// <summary>
+            /// 主营业务利润
+            /// </summary>
+            public string MFRATIO4 { get; set; }
+            /// <summary>
+            /// 净利润
+            /// </summary>
+            public string MFRATIO2 { get; set; }
+
+            /// <summary>
+            /// 总资产
+            /// </summary>
+            public string MFRATIO12 { get; set; }
+
+
+            /// <summary>
+            /// 总负责
+            /// </summary>
+            public string MFRATIO25 { get; set; }
+
+
+            /// <summary>
+            /// 净资产
+            /// </summary>
+            public string MFRATIO122 { get; set; }
+
+
+            /// <summary>
+            /// 流动资产
+            /// </summary>
+            public string MFRATIO23 { get; set; }
+
+            /// <summary>
+            /// 流动负债
+            /// </summary>
+            public string MFRATIO24 { get; set; }
+
+
         }
         #endregion
+
+        #region 财报
+        private static List<string> reportDates = new List<string>()
+        {
+            "03-31","06-30","09-30","12-31"
+        };
+
+        const string finBaseUrl = "http://quotes.money.163.com/hs/marketdata/service/cwsd.php?page=0&query=date:{0}&sort=MFRATIO28&order=desc&count=5000&type=query&req=01750";
+
+        public static List<StockFinanceEntity> GetFinanceList(DateTime reportDate)
+        {
+            reportDate = DateTime.Parse(string.Format("{0}-{1}", reportDate.Year-1, reportDates[3]));
+            var dateIndex = 3;
+            List<StockFinanceEntity> finList = new List<StockFinanceEntity>(10000);
+
+            while (reportDate<DateTime.Now)//.Parse("2016-12-01"))
+            {
+                finList.AddRange(GetFinanceList(reportDate.ToString("yyyy-MM-dd")));
+
+                dateIndex++;
+                if (dateIndex >= 4)
+                {
+                    dateIndex = 0;
+                    reportDate = reportDate.AddYears(1);
+                }
+                reportDate = DateTime.Parse(string.Format("{0}-{1}", reportDate.Year, reportDates[dateIndex]));
+            }
+            return finList;
+        }
+
+        private static List<StockFinanceEntity> GetFinanceList(string reportDate)
+        {
+            var client = new RestClient();
+            var fin = client.GetJson<yjyg>(string.Format(finBaseUrl, reportDate));
+            if (fin != null
+                && !fin.list.IsNullOrEmpty())
+            {
+                var date = DateTime.Parse(reportDate);
+
+                return fin.list.Select(item =>
+                {
+                    return new StockFinanceEntity
+                    {
+                        StockCode = item.SYMBOL,
+                        StockName = item.SNAME,
+                        ReportDate = item.PUBLISHDATE.GetValueOrDefault(date),
+                        EPS = item.MFRATIO28.ToDec(),
+                        NetAssPerShare = item.MFRATIO18.ToDec(),
+                        CashPerShare = item.MFRATIO20.ToDec(),
+                        MainIncoming = item.MFRATIO10.ToDec(),
+                        NetAssets = item.MFRATIO122.ToDec(),
+                        MainpProfit = item.MFRATIO4.ToDec(),
+                        TotalAssets = item.MFRATIO12.ToDec()
+                    };
+                }).ToList();
+                
+            }
+            return new List<StockFinanceEntity>();
+        }
+
+       
+        #endregion
+
+
+
     }
 }

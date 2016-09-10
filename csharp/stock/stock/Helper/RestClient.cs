@@ -5,27 +5,31 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using ServiceStack.Text;
+using StockBiz.Helper;
 
 namespace StockBiz
 {
     public class RestClient
     {
+    
+
         public WebClient WebReq { get; private set; }
 
         public RestClient()
         {
-            WebReq = new WebClient {Proxy = WebProxy.GetDefaultProxy()};
-            if (WebReq.Proxy != null)
-            {
-                WebReq.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
-            }
+            WebReq = new WebClient();// {Proxy = WebProxy.GetDefaultProxy()};
+            //if (WebReq.Proxy != null)
+            //{
+            //    WebReq.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
+            //}
+            WebReq.InitializeLifetimeService();
         }
 
         public T GetJson<T>(string url)
         {
             try
             {
-                var str = WebReq.DownloadString(url);
+                var str = DownloadString(url);
                 return SerializeHelper.JsonDeserialize<T>(str);
             }
             catch (Exception ex)
@@ -39,7 +43,7 @@ namespace StockBiz
         {
             try
             {
-                var str = WebReq.DownloadString(url);
+                var str =DownloadString(url);
                 return SerializeHelper.JsvDeserialize<T>(str);
             }
             catch (Exception ex)
@@ -69,7 +73,7 @@ namespace StockBiz
 
         private static void WriteMsg(string msg)
         {
-            Console.WriteLine(msg);
+            LogFactory.Instance.Write(msg);
         }
 
     }

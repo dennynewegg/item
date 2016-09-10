@@ -16,5 +16,14 @@ namespace StockBiz.Helper
             }
             return "1" + code;
         }
+
+        public static string GetLongCode(string code)
+        {
+            if (code.StartsWith("6"))
+            {
+                return "sh" + code;
+            }
+            return "sz" + code;
+        }
     }
 }

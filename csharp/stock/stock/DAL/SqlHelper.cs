@@ -96,7 +96,7 @@ namespace StockBiz
 
             if (typeof (T).IsPrimitive
                 ||typeof(T) == typeof(string)
-                ||typeof(Nullable<>).IsAssignableFrom(typeof(T) ))
+                ||typeof(T).Name.StartsWith("Nullable") )
             {
                 list.AddRange(from DataRow dr in tb.Rows 
                               select dr[0] into value 
