@@ -47,5 +47,11 @@ namespace StockBiz
             Analyse(sqlText, paramList, varList);
             return paramList.Select(item=>"@"+item).ToList();
         }
+
+        public static string ReplaceParam(string sql,string paramName,string value)
+        {
+            var regExpr = string.Format("{0}\\b",paramName);
+            return Regex.Replace(sql, regExpr, value);
+        }
     }
 }

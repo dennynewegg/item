@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using StockBiz;
-using StockBiz.DAL;
+using StockBiz;
 
 
 namespace stock
@@ -105,6 +105,13 @@ set publicdate=now();";
                 }
                 Console.WriteLine(list.Count);
             }
+        }
+
+        [Test]
+        public static void TestReport()
+        {
+            var stockList = 
+            ReportDAL.QueryHQ(new List<string>() { "600015" });
         }
 
     }

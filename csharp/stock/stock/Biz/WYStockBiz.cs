@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using ServiceStack;
-using StockBiz.Helper;
+
 
 
 namespace StockBiz
@@ -20,7 +20,7 @@ namespace StockBiz
         public static List<StockEntity> GetTradeList(int count = 3500)
         {
             var client = new RestClient();
-            var json = client.DownloadString(string.Format(hq163url, count));
+            var json = client.GetString(string.Format(hq163url, count));
             var result = SerializeHelper.JsonDeserialize<hq>(json);
             if (result?.list != null && result.list.Any())
             {
@@ -72,7 +72,7 @@ namespace StockBiz
         public static List<StockEntity> HistoryTradeList(string stockCode, DateTime from, DateTime to)
         {
             var client = new RestClient();
-            var csv = client.DownloadString(String.Format(historydataUrl, StockHelper.WYCode(stockCode)
+            var csv = client.GetString(String.Format(historydataUrl, StockHelper.WYCode(stockCode)
                 , from.ToString("yyyyMMdd")
                 , to.ToString("yyyyMMdd")));
 
@@ -239,7 +239,7 @@ namespace StockBiz
         #endregion
 
         #region 财报
-        private static List<string> reportDates = new List<string>()
+        public static List<string> reportDates = new List<string>()
         {
             "03-31","06-30","09-30","12-31"
         };
@@ -286,7 +286,7 @@ namespace StockBiz
                         EPS = item.MFRATIO28.ToDec(),
                         NetAssPerShare = item.MFRATIO18.ToDec(),
                         CashPerShare = item.MFRATIO20.ToDec(),
-                        MainIncoming = item.MFRATIO10.ToDec(),
+                        MainIncome = item.MFRATIO10.ToDec(),
                         NetAssets = item.MFRATIO122.ToDec(),
                         MainpProfit = item.MFRATIO4.ToDec(),
                         TotalAssets = item.MFRATIO12.ToDec()
@@ -296,11 +296,7 @@ namespace StockBiz
             }
             return new List<StockFinanceEntity>();
         }
-
-       
+ 
         #endregion
-
-
-
     }
 }

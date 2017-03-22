@@ -27,6 +27,10 @@ namespace StockBiz
             return CsvSerializer.DeserializeFromString<T>(str);
         }
 
+        public static string JsonSerialize(object obj)
+        {
+            return JsonSerializer.SerializeToString(obj, obj.GetType());
+        }
 
     }
 }

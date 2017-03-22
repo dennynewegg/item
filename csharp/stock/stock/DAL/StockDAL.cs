@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StockBiz.DAL
+namespace StockBiz
 {
    public static class StockDAL
     {
         public static void InsertStock(List<StockEntity> list)
         {
-            var sql = "INSERT INTO svc.stock(stockcode,stockname) value(@stockcode,@stockname);";
+            var sql = "INSERT INTO svc.stock(stockcode,stockname,isnew) value(@stockcode,@stockname,@isnew);";
             SqlHelper.ExecuteNonQuery(sql,list);
         }
 
@@ -19,6 +19,8 @@ namespace StockBiz.DAL
             var sql = "select * from svc.stock;";
             return SqlHelper.GetList<StockEntity>(sql);
         }
+
+       
 
     }
 }

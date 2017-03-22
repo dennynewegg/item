@@ -8,13 +8,15 @@ using System.Text;
 using System.Data;
 using System.Data.Common;
 using MySql.Data.MySqlClient;
+using System.IO;
+using System.Data.OleDb;
+using Excel;
 
 namespace StockBiz
 {
     public static class SqlHelper
     {
-
-
+        
         #region public 
         public static void ExecuteNonQuery(string sql, params object[] param)
         {
@@ -29,9 +31,20 @@ namespace StockBiz
                 ListHelper.ForRange<object>(paramList.Cast<object>().ToList()
                     , pList =>
                 {
-                    ExecuteNonQuery(sql,pList.ToArray());
+                    try
+                    {
+                        ExecuteNonQuery(sql, pList.ToArray());
+                    }
+                    catch(Exception ex)
+                    {
+                        if (paramList != null)
+                        {
+                            File.AppendAllText(Guid.NewGuid().ToString()+".txt"
+                                , SerializeHelper.JsonSerialize(paramList));
+                        }
+                        throw ex;
+                    }
                 });
-
             }
             else
             {
@@ -96,6 +109,7 @@ namespace StockBiz
 
             if (typeof (T).IsPrimitive
                 ||typeof(T) == typeof(string)
+                ||typeof(T) == typeof(DateTime)
                 ||typeof(T).Name.StartsWith("Nullable") )
             {
                 list.AddRange(from DataRow dr in tb.Rows 
@@ -258,6 +272,14 @@ namespace StockBiz
             return paramList.ToArray();
         }
 
+        private static bool IsValueType(Type type)
+        {
+            return type.IsPrimitive
+                   || type == typeof(string)
+                   || type == typeof(DateTime)
+                   || type.Name.StartsWith("Nullable");
+        }
+
         private static DbParameter[] CreateParametersForEntity(ref string sql, object entity, string suffix = null)
         {
             if (suffix == null)
@@ -268,12 +290,13 @@ namespace StockBiz
             if (sqlVariables.Count <= 0) return null;
 
             var paramList = new List<DbParameter>(sqlVariables.Count);
+            sqlVariables.Sort((a, b) => a.Length - b.Length);
 
             foreach (string sqlVar in sqlVariables)
             {
                 var value = GetObjectValue(entity, sqlVar.Substring(1));
                 var newSqlVar = sqlVar + suffix;
-                sql = sql.Replace(sqlVar, newSqlVar);
+                sql = SQLAnalyser.ReplaceParam(sql, sqlVar, newSqlVar);
                 paramList.Add(CreateParameter(newSqlVar, value));
             }
             return paramList.ToArray();
@@ -348,6 +371,64 @@ namespace StockBiz
 
         #endregion
 
+
+        public static object ReadValue(this DataRow row ,string columnName)
+        {
+            if(row.Table.Columns.Contains(columnName))
+            {
+                return row[columnName];
+            }
+            return "";
+        }
+
+        public static decimal? ReadDec(this DataRow row, string columnName)
+        {
+            return ReadValue(row, columnName).ToString().ToDec();
+        }
+
+        public static DataTable LoadDataFromExcel(string filePath)
+        {
+            string strConn;
+            strConn = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + filePath + ";Extended Properties='Excel 12.0 Xml;HDR=Yes;IMEX=1'";
+            OleDbConnection OleConn = new OleDbConnection(strConn);
+            OleConn.Open();
+            var name = "new-finance-data";
+            var dateTb = new DataTable(name);
+            string sql = "SELECT * FROM [" + name + "$];";
+            OleDbDataAdapter OleDaExcel = new OleDbDataAdapter(sql, OleConn);
+            OleDaExcel.FillSchema(dateTb, SchemaType.Source);
+
+            name = "old-finance-data";
+            var datatb = new DataTable(name);
+            sql = "SELECT * FROM [" + name + "$];";
+            OleDaExcel = new OleDbDataAdapter(sql, OleConn);
+            OleDaExcel.Fill(datatb);
+
+            var dateColumn  = datatb.Columns.Add("date", typeof(DateTime));
+            for(int i = 0; i < dateTb.Columns.Count; i++)
+            {
+                if (!dateTb.Columns[i].ColumnName.Trim().StartsWith("F"))
+                { 
+                    datatb.Rows[i][dateColumn] = DateTime.Parse( dateTb.Columns[i].ColumnName);
+                }
+            }
+            for(int i = datatb.Rows.Count - 1; i > 0; i--)
+            {
+                if(datatb.Rows[i]["date"] == DBNull.Value
+                    || datatb.Rows[i]["date"] == null)
+                {
+                    datatb.Rows.RemoveAt(i);
+                }
+                else
+                {
+                    break;
+                }
+
+            }
+
+            OleConn.Close();
+            return datatb;
+        }
 
 
     }

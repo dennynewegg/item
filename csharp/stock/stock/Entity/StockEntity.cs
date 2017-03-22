@@ -21,6 +21,9 @@ namespace StockBiz
         public decimal? Turnover { get; set; }
         public decimal? Amount { get; set; }
         public int DateSort { get; set; }
+        public string IsNew { get; set; }
+        public string UpLimitTime { get; set; }
+
 
         public decimal? AvgCost
         {
@@ -39,6 +42,18 @@ namespace StockBiz
             }
         }
 
-      
+        public decimal? AvgK5 { get; set; }
+        public decimal? AvgK10 { get; set; }
+
+        public decimal TrendX
+        {
+            get
+            {
+                return (3 * Close.Value + Open.Value + High.Value + Low.Value) / 6;
+            }
+        }
+        public decimal TrendY { get; set; }
+        public decimal TrendK5 { get; set; }
+        public decimal TrendK10 { get; set; }
     }
 }

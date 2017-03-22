@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using StockBiz;
 
 namespace WinMain
 {
@@ -17,8 +18,21 @@ namespace WinMain
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //Application.SetUnhandledExceptionMode(Un);
-            Application.Run(new Form1());
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+            Application.ThreadException += Application_ThreadException;
+            //Thread.
+            Application.Run(new MainForm());
+        }
+
+        private static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
+        {
+            ExceptionHelper.Handler(e.Exception);
+        }
+
+        private static void CurrentDomainOnUnhandledException(object sender
+            , UnhandledExceptionEventArgs unhandledExceptionEventArgs)
+        {
+            ExceptionHelper.Handler((Exception)unhandledExceptionEventArgs.ExceptionObject);
         }
     }
 }

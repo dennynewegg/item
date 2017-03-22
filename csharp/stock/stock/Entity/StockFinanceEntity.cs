@@ -17,7 +17,7 @@ namespace StockBiz
         /// <summary>
         /// 主营业务收入
         /// </summary>
-        public decimal? MainIncoming { get; set; }
+        public decimal? MainIncome { get; set; }
         /// <summary>
         /// 主营业务利润
         /// </summary>
@@ -27,9 +27,41 @@ namespace StockBiz
         /// 总资产
         /// </summary>
         public decimal? TotalAssets { get; set; }
+
         /// <summary>
         /// 净资产
         /// </summary>
         public decimal? NetAssets { get; set; }
+
+        /// <summary>
+        /// 净利润
+        /// </summary>
+        public decimal? NetProfit { get; set; }
+
+        /// <summary>
+        /// 净利润增长
+        /// </summary>
+        public decimal? NetProfitGrowth { get; set; }
+
+        /// <summary>
+        /// 扣非净利润
+        /// </summary>
+        public decimal? NetIncoming { get; set; }
+
+        /// <summary>
+        /// 每股公积金
+        /// </summary>
+        public decimal? Fund { get; set; }
+
+        /// <summary>
+        /// 每股未分配利润
+        /// </summary>
+        public decimal? UndistributedProfit { get; set; }
+
+        /// <summary>
+        /// 毛利润
+        /// </summary>
+        public decimal? GrossMargin { get; set; }
+
     }
 }

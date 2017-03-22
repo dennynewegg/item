@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using ServiceStack.Text;
-using StockBiz.Helper;
+
 
 namespace StockBiz
 {
@@ -22,14 +22,33 @@ namespace StockBiz
             //{
             //    WebReq.Proxy.Credentials = CredentialCache.DefaultNetworkCredentials;
             //}
-            WebReq.InitializeLifetimeService();
+          
+            //WebReq.InitializeLifetimeService();
         }
+
+        public byte[] GetData(string url)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    WriteMsg($"{DateTime.Now.ToShortTimeString()} Get {url}");
+                    return WebReq.DownloadData(url);
+                }
+                catch (Exception exception)
+                {
+                    WriteMsg(exception.Message);
+                }
+            }
+            return new byte[0];
+        }
+
 
         public T GetJson<T>(string url)
         {
             try
             {
-                var str = DownloadString(url);
+                var str = GetString(url);
                 return SerializeHelper.JsonDeserialize<T>(str);
             }
             catch (Exception ex)
@@ -43,7 +62,7 @@ namespace StockBiz
         {
             try
             {
-                var str =DownloadString(url);
+                var str =GetString(url);
                 return SerializeHelper.JsvDeserialize<T>(str);
             }
             catch (Exception ex)
@@ -53,7 +72,7 @@ namespace StockBiz
             }
         }
 
-        public string DownloadString(string url)
+        public string GetString(string url)
         {
             
             for (int i = 0; i < 5; i++)
