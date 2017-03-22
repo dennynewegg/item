@@ -1,0 +1,8 @@
+CREATE TABLE `svc`.`category` (
+  `ROWID` INT NOT NULL AUTO_INCREMENT,
+  `CategoryName` VARCHAR(45) NOT NULL,
+  `StockCode` VARCHAR(10) NOT NULL,
+  `StockName` VARCHAR(10) NOT NULL,
+  `Source` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`ROWID`))
+ENGINE = MyISAM;
